@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLA 개편 및 협력사 등급제 안내</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices:
+        - Overview: Text explanation of background and goals (HTML/CSS). Goal: Inform.
+        - SLA Reorganization: Text explanation of new rules, static example of 'α(유예 포인트)' calculation for clarity (HTML/CSS). Goal: Inform.
+        - Partner Grading: Interactive HTML table for grade criteria and benefits/penalties. Bar chart (Chart.js) for management fee adjustments per grade. Goal: Compare, Inform.
+        - Excess Control Test: Text explanations, HTML tables for surcharge changes and financial breakdown. Bar chart (Chart.js) for AS-IS vs TO-BE cost comparison. Goal: Inform, Explain complex change.
+        - FAQ: Accordion list (HTML/CSS/JS). Goal: Quick Answers.
+        - Justification: Chosen methods prioritize clarity and direct presentation of key data from the report. Chart.js used for simple comparisons. No SVG/Mermaid used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-button.active { border-bottom-color: #0284c7; color: #0284c7; font-weight: 600; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .table-responsive { overflow-x: auto; }
+        th, td { white-space: normal; word-break: keep-all; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+    </style>
+</head>
+<body class="bg-stone-100 text-gray-800">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-sky-700">SLA 개편 및 협력사 등급제 안내</h1>
+        </header>
+
+        <nav class="mb-8 bg-white shadow-md rounded-lg">
+            <div class="flex flex-wrap justify-center border-b border-gray-200">
+                <button class="tab-button p-4 text-gray-600 hover:text-sky-600 focus:outline-none active" onclick="showSection('overview')">개요</button>
+                <button class="tab-button p-4 text-gray-600 hover:text-sky-600 focus:outline-none" onclick="showSection('sla')">SLA 개편</button>
+                <button class="tab-button p-4 text-gray-600 hover:text-sky-600 focus:outline-none" onclick="showSection('grading')">협력사 등급제</button>
+                <button class="tab-button p-4 text-gray-600 hover:text-sky-600 focus:outline-none" onclick="showSection('excess_control')">초과 통제 테스트</button>
+                <button class="tab-button p-4 text-gray-600 hover:text-sky-600 focus:outline-none" onclick="showSection('faq')">FAQ</button>
+            </div>
+        </nav>
+
+        <main>
+            <section id="overview" class="content-section active p-6 bg-white rounded-lg shadow">
+                <h2 class="text-2xl font-semibold mb-4 text-sky-600">1. 정책 개편 개요</h2>
+                <p class="mb-4 text-gray-700">
+                    본 정책 개편안은 안정적인 배달 수행 환경을 조성하고 협력사 운영의 효율성을 증대시키기 위해 마련되었습니다. 기존 운영 방식에서 나타났던 일부 문제점들을 개선하고, 모든 협력사에게 보다 공정하고 예측 가능한 기준을 제공하는 것을 목표로 합니다.
+                </p>
+                <div class="bg-stone-50 p-4 rounded-md">
+                    <h3 class="text-xl font-semibold mb-3 text-sky-500">1.1. 수립 배경</h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700">
+                        <li>발주량 처리에 대한 의무 부재로 기상 악화 시 처리량 및 처리 비중 감소</li>
+                        <li>FL(Free Lancer) 성향 라이더 비중 증가로 인한 운영 안정성 저하 우려</li>
+                    </ul>
+                </div>
+                <div class="mt-4 bg-stone-50 p-4 rounded-md">
+                    <h3 class="text-xl font-semibold mb-3 text-sky-500">1.2. 목표</h3>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700">
+                        <li>평시 대비 악천후 시 협력사 처리량 유지 및 확대 (협력사별 Min~Max 처리량 관리)</li>
+                        <li>SLA 달성률 향상 및 무관리 협력사를 FL로 전환하여 플릿별 목적에 맞춘 관리 체계 구축</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="sla" class="content-section p-6 bg-white rounded-lg shadow">
+                <h2 class="text-2xl font-semibold mb-4 text-sky-600">2. SLA 개편 상세</h2>
+                 <p class="mb-6 text-gray-700">
+                    새로운 SLA(Service Level Agreement) 정책은 협력사의 성과를 보다 명확하게 측정하고, 이에 따른 합리적인 보상 체계를 구축하는 데 중점을 두고 있습니다. 주요 변경 사항은 관리비 지급 기준의 단일화와 'α(유예 포인트)' 제도 도입입니다.
+                </p>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">2.1. 주요 변경점: 수락률 기반 관리비 지급</h3>
+                        <p class="text-gray-700 mb-2"><strong class="font-semibold">AS-IS:</strong> 발주량 처리(60%)와 라이더 배차수락률(40%) 점수 합산 후 수수료 차등 지급</p>
+                        <p class="text-gray-700 mb-2"><strong class="font-semibold">TO-BE:</strong> 주 단위 수락률 80% 이상 달성 시 건당 관리 수수료 300원 통일 지급</p>
+                        <p class="text-green-600 font-medium">✅ 기대 효과: 최소 달성 통제, 수락률 어뷰징 해소, 관리비 분할 지급 가능</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">2.2. 관리비 지급 기준</h3>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><strong class="font-semibold">지급 대상:</strong> 주 단위 수락률 80% 이상 달성 협력사</li>
+                            <li><strong class="font-semibold">보상:</strong> 건당 관리 수수료 300원으로 통일</li>
+                            <li><strong class="font-semibold">지급 기준:</strong> 최소 달성 세트 * 1세트 물량 * 관리 수수료 + α (유예 포인트)</li>
+                            <li>모든 관리비는 최대 ‘신청 세트수'까지만 지급됩니다.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">2.3. 'α(유예 포인트)' 도입 및 운영 방안</h3>
+                        <p class="text-gray-700 mb-2">'α(유예 포인트)'는 미달성 세트가 발생했더라도, 해당 세트 내 하위 3개 슬롯의 최소 달성률 평균이 80%를 초과할 경우, 해당 미달성 세트에 대한 관리비를 지급하는 제도입니다. 이는 전반적으로 우수한 성과를 보였으나 일부 목표 달성에 미치지 못한 협력사에게 공정한 기회를 제공하기 위함입니다.</p>
+                        <div class="bg-sky-50 p-4 rounded-lg border border-sky-200">
+                            <h4 class="text-lg font-semibold mb-2 text-sky-700">α(유예 포인트) 예시</h4>
+                            <p class="text-gray-700 mb-1"><strong class="font-semibold">상황:</strong> A협력사 신청 세트수 10세트, 실제 달성 9세트 (1세트 미달성)</p>
+                            <p class="text-gray-700 mb-1"><strong class="font-semibold">미달성 세트 내 하위 3개 슬롯 달성률:</strong></p>
+                            <ul class="list-disc list-inside ml-4 text-gray-700">
+                                <li>월요일 오프피크: 75%</li>
+                                <li>화요일 아침점심피크: 76%</li>
+                                <li>금요일 저녁피크: 94%</li>
+                            </ul>
+                            <p class="text-gray-700 mt-2 mb-1"><strong class="font-semibold">평균 달성률:</strong> (75% + 76% + 94%) / 3 = 81.67%</p>
+                            <p class="text-gray-700 mb-1"><strong class="font-semibold">결과:</strong> 평균 달성률(81.67%)이 기준(80%)을 초과하므로 'α(유예 포인트)' 달성.</p>
+                            <p class="text-gray-700"><strong class="font-semibold">보상:</strong> 미달성 1세트의 주문량(예: 739건) × 관리 수수료(300원) = 221,700원 추가 지급.</p>
+                        </div>
+                        <p class="mt-3 text-sm text-gray-600">정책 전달 시, 통일된 관리 수수료(300원)와 수락률 80%라는 명확한 기준을 강조해야 합니다. 특히 'α(유예 포인트)'는 다소 복잡할 수 있으므로, 명확한 설명과 함께 시각 자료나 계산 예시 등을 충분히 제공하는 것이 중요합니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="grading" class="content-section p-6 bg-white rounded-lg shadow">
+                <h2 class="text-2xl font-semibold mb-4 text-sky-600">3. 협력사 등급제 상세</h2>
+                <p class="mb-6 text-gray-700">
+                    협력사 등급제는 협력사의 성과를 기반으로 보다 체계적이고 차등화된 관리를 시행하기 위해 도입됩니다. 이는 안정적인 공급을 유지하고, 우수 협력사에게는 합당한 보상을 제공하는 것을 목표로 합니다.
+                </p>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">3.1. 도입 배경 및 기대 효과</h3>
+                        <p class="text-gray-700 mb-2">절대지표(Threshold)를 기준으로 변동성을 최소화하여 어떤 인프라 상황에서도 안정적인 공급을 유지하고자 합니다.</p>
+                        <p class="text-green-600 font-medium">✅ 기대 효과: 최소 달성 통제, 수락률 어뷰징 해소</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">3.2. 등급 분류 기준</h3>
+                        <p class="text-gray-700 mb-3">협력사 등급은 S, A, B, C, D, F의 6개 등급으로 분류되며, 각 등급은 최소 세트수, 수락률, 최소달성률을 기준으로 결정됩니다.</p>
+                        <div class="table-responsive mb-4 rounded-lg border">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-sky-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-sky-700 uppercase tracking-wider">등급</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-sky-700 uppercase tracking-wider">최소 세트수*</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-sky-700 uppercase tracking-wider">수락률</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-sky-700 uppercase tracking-wider">최소달성률</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-sky-700 uppercase tracking-wider">관리비 조정</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-sky-700 uppercase tracking-wider">기타</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr><td class="px-4 py-3 text-sm">S</td><td class="px-4 py-3 text-sm">최소 4세트</td><td class="px-4 py-3 text-sm">95%</td><td class="px-4 py-3 text-sm">100%</td><td class="px-4 py-3 text-sm text-green-600">+300원</td><td class="px-4 py-3 text-sm">(향후) 세트수 신청 우선권 등</td></tr>
+                                    <tr><td class="px-4 py-3 text-sm">A</td><td class="px-4 py-3 text-sm">최소 3세트</td><td class="px-4 py-3 text-sm">95%</td><td class="px-4 py-3 text-sm">100%</td><td class="px-4 py-3 text-sm text-green-600">+200원</td><td class="px-4 py-3 text-sm">(향후) 세트수 신청 우선권 등</td></tr>
+                                    <tr><td class="px-4 py-3 text-sm">B</td><td class="px-4 py-3 text-sm">최소 2세트</td><td class="px-4 py-3 text-sm">90%</td><td class="px-4 py-3 text-sm">100%</td><td class="px-4 py-3 text-sm text-green-600">+100원</td><td class="px-4 py-3 text-sm">(향후) 세트수 신청 우선권 등</td></tr>
+                                    <tr><td class="px-4 py-3 text-sm">C</td><td class="px-4 py-3 text-sm">최소 1세트</td><td class="px-4 py-3 text-sm">85%</td><td class="px-4 py-3 text-sm">90%</td><td class="px-4 py-3 text-sm">0원</td><td class="px-4 py-3 text-sm">신규 협력사 초기 배정</td></tr>
+                                    <tr><td class="px-4 py-3 text-sm">D</td><td class="px-4 py-3 text-sm">-</td><td class="px-4 py-3 text-sm">80%</td><td class="px-4 py-3 text-sm">80%</td><td class="px-4 py-3 text-sm text-red-600">-100원</td><td class="px-4 py-3 text-sm">2회 연속 시 F등급 후 계약 종료</td></tr>
+                                    <tr><td class="px-4 py-3 text-sm">F</td><td class="px-4 py-3 text-sm">-</td><td class="px-4 py-3 text-sm">-</td><td class="px-4 py-3 text-sm">-</td><td class="px-4 py-3 text-sm text-red-600">미지급</td><td class="px-4 py-3 text-sm">계약 종료 대상</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-4">*세트수는 표준권역별 OD(Order Demand)주문수에 따라 차등 배분됩니다. (OD주문수 * 비중(S:8%, A:4%, B:2%, C:1%)으로 허들 계산, 허들이 등급별 최소 세트수 미달 시 최소 세트수 적용)</p>
+                        <div class="chart-container mx-auto mb-4">
+                            <canvas id="managementFeeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">3.3. 등급 운영 관리 방안</h3>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><strong class="font-semibold">등급 갱신 주기:</strong> 2주</li>
+                            <li><strong class="font-semibold">퍼포먼스 평가:</strong> 최근 2주에 대해 1주일간 등급 책정 후 평균 계산 (가장 최근 주 가중치 0.6 : 이전 주 0.4 적용, 가중치 변동 가능, 향후 우천일/피크타임 가중치 추가 예정)</li>
+                            <li><strong class="font-semibold">신규 협력사:</strong> C등급으로 할당 후 2주간 퍼포먼스 체크 (의무 1세트 신청, 향후 1~n세트로 변경 계획)</li>
+                            <li><strong class="font-semibold">페널티 강화:</strong> D등급 2회 연속 부여 시 F등급 전환 후 계약종료 조치</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">3.4. 권역간 공급 밸런스 관리</h3>
+                        <p class="text-gray-700 mb-2">인기 권역으로 처리 비중이 과도하게 확대되는 것을 방지하고, 인근 비인기 지역의 운영을 활성화하기 위한 요건이 도입됩니다.</p>
+                        <div class="bg-sky-50 p-4 rounded-lg border border-sky-200">
+                             <p class="text-gray-700"><strong class="font-semibold">예시:</strong> 강남 지역에서 11세트 이상 운영을 원하는 협력사는 동일 사업자로 서초 또는 수서/일원 권역 중 1개 이상을 병행 운영해야 합니다.</p>
+                        </div>
+                         <p class="mt-3 text-sm text-gray-600">등급 산정 방식의 투명성을 확보하고, 성과와 보상/페널티 간의 직접적인 연관성을 명확히 전달하는 것이 중요합니다. 특히 D등급 연속 부여 시 "계약종료"라는 중대한 결과에 대해서는 신중하면서도 단호하게 커뮤니케이션할 필요가 있습니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="excess_control" class="content-section p-6 bg-white rounded-lg shadow">
+                <h2 class="text-2xl font-semibold mb-4 text-sky-600">4. 초과 통제 테스트</h2>
+                <p class="mb-6 text-gray-700">
+                    '초과 통제 테스트'는 일부 지역에서 협력사들이 신청 세트와 무관하게 과도한 물량을 수행하는 경향을 안정화하고, 네트워크 운영의 예측 가능성을 높여 'GAP 최소화'(계획된 공급과 실제 수행량 간의 불일치 최소화)를 달성하기 위한 실험적인 정책입니다.
+                </p>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">4.1. 테스트 배경, 목표 및 기대 효과</h3>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><strong class="font-semibold">배경:</strong> 신청세트와 무관하게 초과 수행하는 협력사들의 운행을 안정화하여 GAP 최소화</li>
+                            <li><strong class="font-semibold">목표:</strong> 초과 달성 통제 (약정된 공급 능력 내 운영 유도)</li>
+                            <li><strong class="font-semibold">기대 효과:</strong>
+                                <ul class="list-disc list-inside ml-4">
+                                    <li>테스트 지역 내 운영 안정성 및 예측 가능성 향상</li>
+                                    <li>계획된 공급 능력 기반 공정 주문량 배분</li>
+                                    <li>(장기적) 운영 효율성 증대 (단기 CPO 상승 가능성 있음)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">4.2. 테스트 스킴 운영 가이드</h3>
+                        <p class="text-gray-700 mb-2">테스트 대상 협력사가 수행하는 모든 배달 건에 대해 다음과 같은 인센티브 조정이 적용됩니다:</p>
+                        <p class="text-gray-700 font-bold text-lg text-center py-2 px-4 bg-sky-100 rounded-md">피크 할증 -300원 <span class="text-sky-600 mx-2">↔</span> 관리비 +400원</p>
+                        <p class="text-gray-700 mt-2 mb-2">이는 초과 수행에 대한 매력을 낮추고, 약정된 목표 수행에 대한 동기를 부여하기 위함입니다.</p>
+                        <p class="text-gray-700"><strong class="font-semibold">D그룹 협력사 수익성 보장:</strong> 본 테스트는 D그룹 기준으로도 기존 배달비와 유사하거나 소폭 증가된 금액을 가져갈 수 있도록 설계되었습니다 (피크 할증 감소분(-300원) < 관리비 인상분(+400원)).</p>
+                    </div>
+                     <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">4.3. 테스트 지역 및 선정 조건</h3>
+                        <p class="text-gray-700 mb-1"><strong class="font-semibold">테스트 지역:</strong></p>
+                        <ul class="list-disc list-inside ml-4 text-gray-700">
+                            <li>경기 시흥 (표준경기시흥A/B/C)</li>
+                            <li>대전 동구 (표준대전동A)</li>
+                            <li>경남 양산 (표준경남양산A/B)</li>
+                        </ul>
+                        <p class="text-gray-700 mt-2 mb-1"><strong class="font-semibold">선정 조건:</strong> 3PL 처리비중 50% 초과, 협력사 수 5개 이상, 달성률 130% 이상, 중복 권역 없음</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">4.4. 예상 재정 영향 (시뮬레이션 기반)</h3>
+                        <p class="text-gray-700 mb-2">지표 100% 달성 및 기존 신청 세트수 기준 시뮬레이션 결과, 단기적으로 CPO(건당 주문 처리 비용)가 약 7.9원 상승할 수 있습니다. 이는 운영 안정화 및 GAP 최소화를 위한 투자 비용으로 고려될 수 있습니다.</p>
+                        <div class="chart-container mx-auto mb-4">
+                            <canvas id="excessControlCostChart"></canvas>
+                        </div>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li>기존 관리비 (추정): 7,140만원</li>
+                            <li>SLA 개편 + 관리비 상향 시 관리비: 1억 7,865만원 (▲1억 725만원)</li>
+                            <li>피크할증 하향 절감액: -5,251만원</li>
+                            <li><strong class="font-semibold">최종 예상 비용 변화: 기존 대비 ▲5,474만원</strong></li>
+                        </ul>
+                        <p class="text-gray-700 mt-2"><strong class="font-semibold">신규 지급 항목:</strong> 상향된 관리비는 라이더 인지 용이성을 위해 별도 항목(예: '[팀 보상 프로모션]')으로 지급될 예정입니다.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-sky-500">4.5. 테스트 지역 피크 할증 변경안 (예시)</h3>
+                        <div class="table-responsive rounded-lg border">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-sky-50">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-sky-700 uppercase">구분</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-sky-700 uppercase">시간대</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-sky-700 uppercase">주중/주말</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-sky-700 uppercase">기존 할증</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-sky-700 uppercase">변경 할증 (-300원)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                                    <tr><td rowspan="5" class="px-3 py-2 align-top">경인B</td><td class="px-3 py-2">오전</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">600 / 800</td><td class="px-3 py-2">300 / 500</td></tr>
+                                    <tr><td class="px-3 py-2">점심피크</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">800 / 1,100</td><td class="px-3 py-2">500 / 800</td></tr>
+                                    <tr><td class="px-3 py-2">오프피크</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">700 / 900</td><td class="px-3 py-2">400 / 600</td></tr>
+                                    <tr><td class="px-3 py-2">저녁피크</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">900 / 1,200</td><td class="px-3 py-2">600 / 900</td></tr>
+                                    <tr><td class="px-3 py-2">야간</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">700 / 900</td><td class="px-3 py-2">400 / 600</td></tr>
+                                    <tr><td rowspan="5" class="px-3 py-2 align-top">지방</td><td class="px-3 py-2">오전</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">600 / 800</td><td class="px-3 py-2">300 / 500</td></tr>
+                                    <tr><td class="px-3 py-2">점심피크</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">700 / 1,000</td><td class="px-3 py-2">400 / 700</td></tr>
+                                    <tr><td class="px-3 py-2">오프피크</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">600 / 800</td><td class="px-3 py-2">300 / 500</td></tr>
+                                    <tr><td class="px-3 py-2">저녁피크</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">800 / 1,100</td><td class="px-3 py-2">500 / 800</td></tr>
+                                    <tr><td class="px-3 py-2">야간</td><td class="px-3 py-2">주중/주말</td><td class="px-3 py-2">600 / 800</td><td class="px-3 py-2">300 / 500</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mt-3 text-sm text-gray-600">본 테스트는 면밀한 모니터링과 함께 진행되며, 결과에 따라 향후 정책 확대 여부가 결정될 예정입니다. 'GAP 최소화'에 대한 명확한 정의 및 측정 지표 설정이 중요합니다.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="faq" class="content-section p-6 bg-white rounded-lg shadow">
+                <h2 class="text-2xl font-semibold mb-4 text-sky-600">5. 자주 묻는 질문 (FAQ)</h2>
+                <p class="mb-6 text-gray-700">
+                    새로운 정책과 관련하여 궁금하실 수 있는 사항들을 정리했습니다. 아래 내용을 확인해주시고, 추가 문의사항은 담당 채널을 통해 전달해주시기 바랍니다.
+                </p>
+                <div class="space-y-3">
+                    <div class="accordion-item">
+                        <button class="accordion-header w-full text-left p-4 bg-sky-50 hover:bg-sky-100 rounded-md focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold text-sky-700">Q1: 사업자 이동 시 등급은 어떻게 유지되나요?</span>
+                            <span class="arrow transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-4 bg-white border border-t-0 rounded-b-md">
+                            <p class="text-gray-700">A: 라이더 및 퍼포먼스를 체크하여 연결성을 결정합니다. 구체적인 기준은 내부 검토 후 안내될 예정입니다.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header w-full text-left p-4 bg-sky-50 hover:bg-sky-100 rounded-md focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold text-sky-700">Q2: Terminated에서 Operating으로 전환된 협력사의 등급은 어떻게 되나요?</span>
+                            <span class="arrow transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-4 bg-white border border-t-0 rounded-b-md">
+                            <p class="text-gray-700">A: 온보딩으로 인한 C등급 배정 후 새로 퍼포먼스를 확인하여 등급이 조정됩니다.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header w-full text-left p-4 bg-sky-50 hover:bg-sky-100 rounded-md focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold text-sky-700">Q3: 신규 협력사가 등급 갱신 주기 중간에 합류 시 퍼포먼스 평가는 어떻게 되나요?</span>
+                            <span class="arrow transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-4 bg-white border border-t-0 rounded-b-md">
+                            <p class="text-gray-700">A: (TBD) 현재 논의 중이며, 2주간의 모니터링 일자가 모두 채워지지 않는 협력사는 초기 온보딩 기준(예: C등급)을 적용하는 방안 등을 검토하고 있습니다. 확정되는 대로 신속히 안내드리겠습니다.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header w-full text-left p-4 bg-sky-50 hover:bg-sky-100 rounded-md focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold text-sky-700">Q4: 어드민 또는 기타 툴을 통해 현황(예: 'α 포인트' 계산) 조회가 가능한가요?</span>
+                            <span class="arrow transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-4 bg-white border border-t-0 rounded-b-md">
+                            <p class="text-gray-700">A: 네, 협력사분들의 편의를 위해 배민커넥트비즈 어드민 페이지 등에서 관련 현황을 조회할 수 있도록 기능 개발을 요청할 예정입니다. 제공 시점은 추후 공지하겠습니다.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <button class="accordion-header w-full text-left p-4 bg-sky-50 hover:bg-sky-100 rounded-md focus:outline-none flex justify-between items-center">
+                            <span class="font-semibold text-sky-700">Q5: 앱 오류 등으로 인해 세트 달성에 차질이 생긴 경우 유예 조건이 있나요?</span>
+                            <span class="arrow transform transition-transform duration-300">▼</span>
+                        </button>
+                        <div class="accordion-content p-4 bg-white border border-t-0 rounded-b-md">
+                            <p class="text-gray-700">A: 시스템 오류 등 불가피한 상황 발생 시, 완화된 조건만큼 평가 기준도 유연하게 적용될 예정입니다. 구체적인 사례 발생 시 담당 채널로 문의 바랍니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="mt-12 pt-8 border-t border-gray-300 text-center text-sm text-gray-500">
+            <p>&copy; 2025. 본 자료는 내부 참고용으로, 외부 유출을 금합니다.</p>
+        </footer>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('overview'); // Show overview by default
+
+            // Accordion functionality
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const arrow = header.querySelector('.arrow');
+                header.addEventListener('click', () => {
+                    const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    if (isOpen) {
+                        content.style.maxHeight = '0px';
+                        arrow.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        arrow.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            // Chart.js: Management Fee Chart
+            const mgmtFeeCtx = document.getElementById('managementFeeChart');
+            if (mgmtFeeCtx) {
+                new Chart(mgmtFeeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['S 등급', 'A 등급', 'B 등급', 'C 등급', 'D 등급'],
+                        datasets: [{
+                            label: '관리비 조정액 (원)',
+                            data: [300, 200, 100, 0, -100],
+                            backgroundColor: [
+                                'rgba(56, 189, 248, 0.6)', // sky-400
+                                'rgba(14, 165, 233, 0.6)', // sky-500
+                                'rgba(2, 132, 199, 0.6)',  // sky-600
+                                'rgba(125, 211, 252, 0.6)',// sky-300
+                                'rgba(251, 113, 133, 0.6)' // rose-400 for D
+                            ],
+                            borderColor: [
+                                'rgba(56, 189, 248, 1)',
+                                'rgba(14, 165, 233, 1)',
+                                'rgba(2, 132, 199, 1)',
+                                'rgba(125, 211, 252, 1)',
+                                'rgba(251, 113, 133, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '조정액 (원)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: '등급별 관리비 조정액', font: { size: 16 } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.formattedValue + '원';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart.js: Excess Control Test Cost Chart
+            const excessControlCostCtx = document.getElementById('excessControlCostChart');
+            if (excessControlCostCtx) {
+                 new Chart(excessControlCostCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['기존 총 비용 (추정)', '변경 후 예상 총 비용'],
+                        datasets: [{
+                            label: '비용 (원)',
+                            data: [71400000, 71400000 + 54736800], // 71.4M, 71.4M + 54.7368M
+                            backgroundColor: [
+                                'rgba(163, 163, 163, 0.6)', // neutral-500
+                                'rgba(2, 132, 199, 0.6)'   // sky-600
+                            ],
+                            borderColor: [
+                                'rgba(163, 163, 163, 1)',
+                                'rgba(2, 132, 199, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '총 비용 (원)' },
+                                ticks: {
+                                    callback: function(value) {
+                                        return (value / 1000000) + '백만원';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: '초과 통제 테스트 예상 비용 변화', font: { size: 16 }},
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString('ko-KR') + '원';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
